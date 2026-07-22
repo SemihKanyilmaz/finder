@@ -3,12 +3,14 @@ package client
 import (
 	"context"
 	"fmt"
-
-	"github.com/valyala/fasthttp"
+	"io"
+	"net/http"
+	"time"
 )
 
 type Config struct {
 	BaseURL string
+	Timeout time.Duration
 }
 
 type Request struct {
@@ -23,45 +25,50 @@ type Response struct {
 }
 
 type Client struct {
-	c       *fasthttp.Client
+	http    *http.Client
 	baseURL string
 }
 
 func New(cfg Config) *Client {
+	timeout := cfg.Timeout
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
 	return &Client{
-		c:       &fasthttp.Client{},
+		http:    &http.Client{Timeout: timeout},
 		baseURL: cfg.BaseURL,
 	}
 }
 
 func (cl *Client) Get(ctx context.Context, r Request) (*Response, error) {
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseRequest(req)
-	defer fasthttp.ReleaseResponse(resp)
-
-	req.Header.SetMethod(fasthttp.MethodGet)
-	req.SetRequestURI(cl.baseURL + r.Path)
-
-	for k, v := range r.Query {
-		req.URI().QueryArgs().Set(k, v)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cl.baseURL+r.Path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build request: %w", err)
 	}
+
+	q := req.URL.Query()
+	for k, v := range r.Query {
+		q.Set(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
+
 	for k, v := range r.Header {
 		req.Header.Set(k, v)
 	}
 
-	var err error
-	if d, ok := ctx.Deadline(); ok {
-		err = cl.c.DoDeadline(req, resp, d)
-	} else {
-		err = cl.c.Do(req, resp)
-	}
+	resp, err := cl.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("get %s: %w", cl.baseURL+r.Path, err)
+		return nil, fmt.Errorf("get %s: %w", req.URL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read body: %w", err)
 	}
 
 	return &Response{
-		StatusCode: resp.StatusCode(),
-		Body:       append([]byte(nil), resp.Body()...),
+		StatusCode: resp.StatusCode,
+		Body:       body,
 	}, nil
 }

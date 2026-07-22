@@ -75,9 +75,6 @@ func mapXMLItem(item xmlItem, source string) (model.Content, error) {
 	}
 
 	contentType := model.ContentType(item.Type)
-	if contentType == "article" {
-		contentType = model.ContentTypeText
-	}
 
 	return model.Content{
 		ID:          item.ID,

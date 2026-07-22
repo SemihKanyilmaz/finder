@@ -13,8 +13,8 @@ type calculator interface {
 }
 
 var calculators = map[model.ContentType]calculator{
-	model.ContentTypeVideo: videoScorer{},
-	model.ContentTypeText:  textScorer{},
+	model.ContentTypeVideo:   videoScorer{},
+	model.ContentTypeArticle: articleScorer{},
 }
 
 func Score(c model.Content) float64 {

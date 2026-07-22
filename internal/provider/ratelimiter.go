@@ -1,0 +1,40 @@
+package provider
+
+import (
+	"context"
+	"finder/internal/cache"
+	"finder/internal/model"
+	"fmt"
+	"time"
+)
+
+type rateLimitedProvider struct {
+	provider ContentProvider
+	cache    cache.Cache
+	limit    int
+	window   time.Duration
+}
+
+func NewRateLimitedProvider(p ContentProvider, c cache.Cache, limitPerSec int) ContentProvider {
+	return &rateLimitedProvider{
+		provider: p,
+		cache:    c,
+		limit:    limitPerSec,
+		window:   time.Second,
+	}
+}
+
+func (r *rateLimitedProvider) Fetch(ctx context.Context) ([]model.Content, error) {
+	key := fmt.Sprintf("ratelimit:%T", r.provider)
+
+	count, err := r.cache.Increment(ctx, key, r.window)
+	if err != nil {
+		return nil, fmt.Errorf("rate limit check: %w", err)
+	}
+
+	if count > int64(r.limit) {
+		return nil, fmt.Errorf("rate limit exceeded for %T", r.provider)
+	}
+
+	return r.provider.Fetch(ctx)
+}

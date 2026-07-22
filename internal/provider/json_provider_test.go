@@ -56,7 +56,7 @@ func TestJSONProviderFetch(t *testing.T) {
 		t.Errorf("got source %q, want %q", items[0].Source, "json")
 	}
 
-	if items[1].Type != model.ContentTypeText || items[1].ReadingTime != 8 || items[1].Reactions != 320 {
+	if items[1].Type != model.ContentTypeArticle || items[1].ReadingTime != 8 || items[1].Reactions != 320 {
 		t.Errorf("unexpected text item: %+v", items[1])
 	}
 }

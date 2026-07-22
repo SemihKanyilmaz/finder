@@ -65,7 +65,7 @@ func TestXMLProviderFetch(t *testing.T) {
 		t.Errorf("got source %q, want %q", items[0].Source, "xml")
 	}
 
-	if items[1].ID != "a1" || items[1].Type != model.ContentTypeText {
+	if items[1].ID != "a1" || items[1].Type != model.ContentTypeArticle {
 		t.Errorf("article should map to text type: %+v", items[1])
 	}
 	if items[1].Title != "Clean Architecture" {

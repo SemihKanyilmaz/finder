@@ -57,7 +57,7 @@ func TestScore(t *testing.T) {
 		{
 			name: "text within one week",
 			content: model.Content{
-				Type:        model.ContentTypeText,
+				Type:        model.ContentTypeArticle,
 				ReadingTime: 8,
 				Reactions:   320,
 				PublishedAt: now.Add(-5 * 24 * time.Hour),
@@ -67,7 +67,7 @@ func TestScore(t *testing.T) {
 		{
 			name: "text within one month",
 			content: model.Content{
-				Type:        model.ContentTypeText,
+				Type:        model.ContentTypeArticle,
 				ReadingTime: 12,
 				Reactions:   540,
 				PublishedAt: now.Add(-20 * 24 * time.Hour),
@@ -87,7 +87,7 @@ func TestScore(t *testing.T) {
 		{
 			name: "text with zero reading time",
 			content: model.Content{
-				Type:        model.ContentTypeText,
+				Type:        model.ContentTypeArticle,
 				ReadingTime: 0,
 				Reactions:   100,
 				PublishedAt: now.Add(-10 * 24 * time.Hour),
