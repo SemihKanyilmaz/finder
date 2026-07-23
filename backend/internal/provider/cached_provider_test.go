@@ -97,6 +97,19 @@ func TestCachedProvider_ProviderError(t *testing.T) {
 	}
 }
 
+func TestCachedProvider_EmptyProviderResult(t *testing.T) {
+	// Provider boş slice dönünce hata olmadan cache'e yazılmalı ve boş dönmeli
+	cp := NewCachedProvider("test", &mockProvider{items: []model.Content{}}, &mockCache{getErr: redis.Nil}, time.Minute)
+
+	got, err := cp.Fetch(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error on empty result: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("got %d items, want 0", len(got))
+	}
+}
+
 func TestCachedProvider_CacheSetError(t *testing.T) {
 	cp := NewCachedProvider("test", &mockProvider{items: []model.Content{{ID: "fresh"}}}, &mockCache{getErr: redis.Nil, setErr: errors.New("redis full")}, time.Minute)
 

@@ -45,16 +45,24 @@ func Execute() {
 	}
 	defer redisClient.Close()
 
-	c := cache.NewRedisCache(redisClient)
+	redisCache := cache.NewRedisCache(redisClient)
 
 	repo := repository.NewPostgresRepository(pool)
-	cachedRepo := repository.NewCachedRepository(repo, c, cfg.CacheTTL)
+	cachedRepo := repository.NewCachedRepository(repo, redisCache, cfg.CacheTTL)
 
 	p1Client := client.New(client.Config{BaseURL: cfg.Provider1.BaseURL})
 	p2Client := client.New(client.Config{BaseURL: cfg.Provider2.BaseURL})
 
-	p1 := provider.NewCachedProvider(cfg.Provider1.Name, provider.NewCircuitBreakerProvider(cfg.Provider1.Name, provider.NewRateLimitedProvider(cfg.Provider1.Name, provider.NewJSONProvider(cfg.Provider1.Name, p1Client), c, cfg.RateLimitPerSec), cfg.CBTimeout, cfg.CBThreshold), c, cfg.ProviderCacheTTL)
-	p2 := provider.NewCachedProvider(cfg.Provider2.Name, provider.NewCircuitBreakerProvider(cfg.Provider2.Name, provider.NewRateLimitedProvider(cfg.Provider2.Name, provider.NewXMLProvider(cfg.Provider2.Name, p2Client), c, cfg.RateLimitPerSec), cfg.CBTimeout, cfg.CBThreshold), c, cfg.ProviderCacheTTL)
+	p1json := provider.NewJSONProvider(cfg.Provider1.Name, p1Client)
+	p1cb := provider.NewCircuitBreakerProvider(cfg.Provider1.Name, p1json, cfg.CBTimeout, cfg.CBThreshold)
+	p1rl := provider.NewRateLimitedProvider(cfg.Provider1.Name, p1cb, redisCache, cfg.RateLimitPerSec)
+	p1 := provider.NewCachedProvider(cfg.Provider1.Name, p1rl, redisCache, cfg.ProviderCacheTTL)
+
+	p2xml := provider.NewXMLProvider(cfg.Provider2.Name, p2Client)
+	p2cb := provider.NewCircuitBreakerProvider(cfg.Provider2.Name, p2xml, cfg.CBTimeout, cfg.CBThreshold)
+	p2rl := provider.NewRateLimitedProvider(cfg.Provider2.Name, p2cb, redisCache, cfg.RateLimitPerSec)
+	p2 := provider.NewCachedProvider(cfg.Provider2.Name, p2rl, redisCache, cfg.ProviderCacheTTL)
+
 	aggregator := provider.NewAggregator(p1, p2)
 
 	svc := service.New(cachedRepo, aggregator)

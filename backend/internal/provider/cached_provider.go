@@ -45,7 +45,7 @@ func (p *cachedProvider) Fetch(ctx context.Context) ([]model.Content, error) {
 	contents, err := p.provider.Fetch(ctx)
 	if err != nil {
 		metrics.ProviderFetchTotal.WithLabelValues(p.name, "failure").Inc()
-		slog.Error("error while fetching data from provider.", " provider: ", p.name)
+		slog.Error("error while fetching data from provider", "provider", p.name)
 		return nil, err
 	}
 	metrics.ProviderFetchTotal.WithLabelValues(p.name, "success").Inc()

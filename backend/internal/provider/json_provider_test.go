@@ -121,6 +121,27 @@ func TestJSONProviderFetchInvalidTime(t *testing.T) {
 	}
 }
 
+func TestJSONProviderFetchEmptyContents(t *testing.T) {
+	body := `{"contents": []}`
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	c := client.New(client.Config{BaseURL: srv.URL})
+	p := NewJSONProvider("json", c)
+
+	items, err := p.Fetch(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error on empty contents: %v", err)
+	}
+	if len(items) != 0 {
+		t.Errorf("got %d items, want 0", len(items))
+	}
+}
+
 func TestJSONProviderFetchHTTPError(t *testing.T) {
 	c := client.New(client.Config{BaseURL: "http://localhost:1"})
 	p := NewJSONProvider("json", c)

@@ -137,6 +137,27 @@ func TestXMLProviderFetchInvalidDate(t *testing.T) {
 	}
 }
 
+func TestXMLProviderFetchEmptyFeed(t *testing.T) {
+	body := `<?xml version="1.0" encoding="UTF-8"?><feed><items></items></feed>`
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	c := client.New(client.Config{BaseURL: srv.URL})
+	p := NewXMLProvider("xml", c)
+
+	items, err := p.Fetch(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error on empty feed: %v", err)
+	}
+	if len(items) != 0 {
+		t.Errorf("got %d items, want 0", len(items))
+	}
+}
+
 func TestXMLProviderFetchHTTPError(t *testing.T) {
 	c := client.New(client.Config{BaseURL: "http://localhost:1"})
 	p := NewXMLProvider("xml", c)

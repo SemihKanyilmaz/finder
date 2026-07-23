@@ -5,6 +5,7 @@ import (
 	"finder/internal/cache"
 	"finder/internal/model"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -35,7 +36,8 @@ func (r *rateLimitedProvider) Fetch(ctx context.Context) ([]model.Content, error
 	}
 
 	if count > int64(r.limit) {
-		return nil, fmt.Errorf("rate limit exceeded for %T", r.provider)
+		slog.Warn("rate limit exceeded", "provider", r.name, "count", count, "limit", r.limit)
+		return nil, fmt.Errorf("rate limit exceeded for %s", r.name)
 	}
 
 	return r.provider.Fetch(ctx)

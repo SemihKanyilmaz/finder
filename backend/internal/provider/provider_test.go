@@ -55,6 +55,19 @@ func TestAggregatorAllFailed(t *testing.T) {
 	}
 }
 
+func TestAggregatorSingleProvider(t *testing.T) {
+	p1 := &mockProvider{items: []model.Content{{ID: "1"}, {ID: "2"}}}
+
+	agg := NewAggregator(p1)
+	items, err := agg.FetchAll(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(items) != 2 {
+		t.Errorf("got %d items, want 2", len(items))
+	}
+}
+
 func TestAggregatorEmpty(t *testing.T) {
 	agg := NewAggregator()
 	items, err := agg.FetchAll(context.Background())

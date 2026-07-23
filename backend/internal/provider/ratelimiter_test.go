@@ -28,6 +28,16 @@ func TestRateLimitedProvider_ExceedsLimit(t *testing.T) {
 	}
 }
 
+func TestRateLimitedProvider_AtExactLimit(t *testing.T) {
+	// count == limit → geçmeli (kod > limit check ediyor)
+	rl := NewRateLimitedProvider("test", &mockProvider{items: []model.Content{{ID: "1"}}}, &mockCache{incrVal: 10}, 10)
+
+	_, err := rl.Fetch(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error at exact limit, got: %v", err)
+	}
+}
+
 func TestRateLimitedProvider_IncrementError(t *testing.T) {
 	rl := NewRateLimitedProvider("test", &mockProvider{items: []model.Content{{ID: "1"}}}, &mockCache{incrErr: errors.New("redis down")}, 10)
 
