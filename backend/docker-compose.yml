@@ -1,0 +1,53 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: "8080"
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/finder?sslmode=disable"
+      REDIS_URL: "redis://redis:6379/0"
+      PROVIDER1_NAME: "provider-1"
+      PROVIDER1_BASE_URL: "https://raw.githubusercontent.com"
+      PROVIDER2_NAME: "provider-2"
+      PROVIDER2_BASE_URL: "https://raw.githubusercontent.com"
+      RATE_LIMIT_PER_SEC: "10"
+      CACHE_TTL: "5m"
+      PROVIDER_CACHE_TTL: "1m"
+      CB_TIMEOUT: "30s"
+      CB_THRESHOLD: "3"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finder
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/001_create_contents.up.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

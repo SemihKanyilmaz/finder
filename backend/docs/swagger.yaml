@@ -1,0 +1,98 @@
+basePath: /
+definitions:
+  model.Content:
+    properties:
+      id:
+        type: string
+      publishedAt:
+        type: string
+      score:
+        format: float64
+        type: number
+      source:
+        type: string
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/model.ContentType'
+    type: object
+  model.ContentType:
+    enum:
+    - video
+    - article
+    type: string
+    x-enum-varnames:
+    - ContentTypeVideo
+    - ContentTypeArticle
+  model.SearchResult:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.Content'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Aggregates content from multiple providers and ranks results by score.
+  title: Finder Search API
+  version: "1.0"
+paths:
+  /search:
+    get:
+      description: Fetches content from providers, scores them, and returns paginated
+        results
+      parameters:
+      - description: Keyword
+        in: query
+        name: q
+        type: string
+      - description: Content type (video, article)
+        in: query
+        name: type
+        type: string
+      - description: Sort field (score, freshness)
+        in: query
+        name: sortBy
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SearchResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search content
+      tags:
+      - search
+swagger: "2.0"
